@@ -1,0 +1,29 @@
+pictures at 4x magnification
+
+color deconvolution > H&E
+rm Colour_3 (green)
+
+Colour_2: Pink
+	Duplicate: (old is now referenced as Pink_dupl)
+	Enhance contrast 50%
+	Threshold: Otsu, auto (red)
+	Remove Outliers: radius 4 pixels, threshold 50, which outliers Dark
+	Remove Outliers: radius 50 pixels, threshold 50, which outliers Bright
+	Create Selection
+Colour_1: Purple
+	Enhance contrast 50%
+	Image > Adjust > Threshold: Otsu, auto (over/under to check areas, purple = inside)
+	Remove Outliers: radius 20 pixels, threshold 50, which outliers Dark
+	Remove Outliers: radius 10 pixels, threshold 50, which outliers Bright
+	Restore Selection (Ctrl + Shift + E)
+	Edit > Fill (Ctrl + F)
+	**may need to manually remove parts here**
+	Create Selection
+Pink_dupl:
+	Enhance contrast 50%
+	Threshold: Otsu, auto (red)
+	Restore Selection
+	Make Inverse
+	Fill
+	Remove Selection
+	Analyze Particles: 30 - 169
