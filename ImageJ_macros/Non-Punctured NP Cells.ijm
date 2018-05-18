@@ -1,4 +1,4 @@
-//To be called by the Count_NP_Cells.ijm macro
+//To be called by the Count_NP_Cells.ijm macro by Erikka Linn
 //make sure to select the image to process/count
 
 	imageTitle = getTitle();
