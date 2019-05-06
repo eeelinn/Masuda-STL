@@ -1,6 +1,10 @@
 # Live Dead Cell Analysis Script
 
-**Last Update:** 1.22.2019 by Erikka Linn
+**Last Update:** 4.16.2019 by Erikka Linn
+
+## Added Script
+**Name:** `LDCell_Count.py` (works on .lif files)
+*TODO:* add functionality for red cells vs green cells? Add excel export function.
 
 #### Important Links
 
