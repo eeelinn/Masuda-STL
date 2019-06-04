@@ -1,19 +1,15 @@
-#@File file
+#@File (label='Choose file to analyze') file
+#@File(label='Choose a save directory', style='directory') save_Dir
+#@ Short(label='# of Slices', min=1) split
 
 import os, csv
-from ij.measure import ResultsTable, Measurements
-from ij.gui import Roi
+from ij.gui import Roi, Overlay, TextRoi
 from ij.plugin import ChannelSplitter
-from ij.plugin.frame import RoiManager
+from java.awt import Font, Color
 from loci.plugins import BF
-from ij import IJ, ImageStack
+from ij import IJ, ImageStack, WindowManager
 from loci.common import Region
 from loci.plugins.in import ImporterOptions, ImagePlusReader, ImportProcess
-
-name = ['File']
-layer = ['Layer']
-split = 3
-results = ['Slice,Count,Total Area,Average Size,%Area']
 
 def Analyze(imp):
 	IJ.setAutoThreshold(imp, "Otsu dark stack")
@@ -22,24 +18,47 @@ def Analyze(imp):
 	IJ.run(imp, "Watershed", "stack")
 	IJ.run(imp, "Analyze Particles...", "size=8-Infinity pixel show=Masks summarize stack")
 
+def saveImg(imp, nslices):
+	mask = WindowManager.getImage('Mask of ' + imp.getTitle())
+	IJ.save(mask, saveIm + '/' + title + '_' + str(i+1) + '.tif')
+	label = mask.duplicate()
+	for n in range(1,nslices+1):
+		s = label.getStack().getProcessor(n);
+		s.setFont(Font("SansSerif", Font.BOLD, 30));
+		s.setColor(Color.blue);
+		s.drawString(title + ' Layer: ' + str(i+1) + ' Slice: ' + str(n), 20, 40)
+	label.updateAndDraw()
+	IJ.save(label, saveIm + '/labeled_' + title + '_' + str(i+1) + '.tif')
+	IJ.run("Close")
+
 def fileProcess(title):
-	#save Summary Window
+	#save Summary Window and close
 	IJ.selectWindow("Summary of " + title)	
-	tempFile = saveDir + "/" + title + str(i)+ ".csv"
+	tempFile = saveDir + "/temp_" + title + str(i)+ ".csv"
 	IJ.saveAs("Results", tempFile)
+	
 	#open data in string for final file save
-	with open(tempFile) as r:
+	with open(tempFile, 'r') as r:
 		result = r.read().splitlines()
 	return result[1:]
+	
 
 # Get file name and path
 filename = file.getAbsolutePath()
 saveName = os.path.basename(filename)
-dirPath = os.path.dirname(filename)
+saveDir = str(save_Dir) + '/Results'
+saveIm = str(save_Dir) + '/CountedImages'
+
+# Initialize variables for Saving
+name = ['File']
+layer = ['Layer']
+results = ['Slice,Count,Total Area,Average Size,%Area']
 
 # Check if folders are there or not   
-if not os.path.exists(dirPath + '/Results'):     
-	os.mkdir(dirPath + '/Results')
+if not os.path.exists(saveDir):     
+	os.mkdir(saveDir)
+if not os.path.exists(saveIm):    	
+	os.mkdir(saveIm)
 
 # set up options for import
 opts = ImporterOptions()
@@ -50,6 +69,9 @@ opts.setUngroupFiles(True)
 process = ImportProcess(opts)
 process.execute()
 nseries = process.getSeriesCount()
+
+# Channel Splitter Definition
+splitter = ChannelSplitter()
  
 # reader belonging to the import process
 reader = process.getReader()
@@ -70,37 +92,45 @@ for i in range(0, nseries):
 	# read and process all images in series
 	imps = impReader.openImagePlus()
 
+	# deactivate series for next round (otherwise will re-analyze everything)
+	opts.setSeriesOn(i, False)
+
 	# run analysis on active series for all images in stack
 	for imp in imps:
-		title = imp.getTitle()
-		imp.show()
+		#title = imp.getTitle()
+		#imp.show()
+		channels = splitter.split(imp)
+		
 		# int array [width, height, nChannels, nSlices, nFrames]
 		Dim = imp.getDimensions()
-		print Dim
-
-		for i in range(split):
-			titles = [title]*Dim[2]*Dim[3]
-			name.extend(titles)
-			layer.extend([i+1]*Dim[2]*Dim[3])
+		for c in channels:
+			title = c.getTitle()
+			for i in range(split):
+				titles = [title]*Dim[3]
+				name.extend(titles)
+				layer.extend([i+1]*Dim[3])
 			
-			# Set up ROIs and analyze based on how it is split
-			imp.setRoi(0, i*Dim[1]/3, Dim[0], Dim[1]/3)
-			Analyze(imp)
+				# Set up ROIs and analyze based on how it is split
+				c.setRoi(0, i*Dim[1]/split, Dim[0], Dim[1]/split)
+				Analyze(c)
+				saveImg(c, Dim[3])
+			
+			# save results of series
+			results.extend(fileProcess(title))
 
-		opts.setSeriesOn(i, False)
-
-
-	# save results of series
-	saveDir = "C:/Users/Erikka Linn/Documents/Masuda Lab/Test"
-	results.extend(fileProcess(title))
-
+#IJ.run("Close All")
 
 # concatenate all excel files into one file
 with open(saveDir + '/' + saveName + '.csv', 'w') as w:
 	w.write('\n'.join('%s,%s,%s' % x for x in zip(name, layer, results)))
 
+# Remove temporary .csv files
+for fname in os.listdir(saveDir):
+    if fname.startswith("temp_"):
+        os.remove(os.path.join(saveDir, fname))
 
 
+#TODO: close summary table
 
 
 
