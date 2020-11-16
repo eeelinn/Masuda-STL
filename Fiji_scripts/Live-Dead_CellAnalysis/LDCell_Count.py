@@ -127,15 +127,22 @@ for i in range(0, nseries):
 			# int array [width, height, nChannels, nSlices, nFrames]
 			Dim = c.getDimensions()
 			prev = 0
+			if len(channels) > 1:
+				#if two channels, care about nSlices
+				d_idx = 3
+			else:
+				#if only one channel, care about nFrames
+				d_idx = 4
+				
 			for i in range(0, len(layers)):
-				titles = [title]*Dim[3]
+				titles = [title]*Dim[d_idx]
 				name.extend(titles)
-				layer.extend([labels[i]]*Dim[3])
+				layer.extend([labels[i]]*Dim[d_idx])
 			
 				# Set up ROIs and analyze based on how it is split
 				c.setRoi(0, int(prev*Dim[1]), Dim[0], int(layers[i]*Dim[1]))
 				Analyze(c)
-				saveImg(c, Dim[3], labels[i])
+				saveImg(c, Dim[d_idx], labels[i])
 				
 				# save results of series
 				prev = prev + layers[i]
@@ -179,3 +186,5 @@ with open(saveDir + '/' + saveName + '.csv', 'w') as w:
 # add to the log file
 with open(str(save_Dir) + '/summary.csv', 'a+') as s:
 	s.write(sumtext)
+
+print("Script completed successfully!")
