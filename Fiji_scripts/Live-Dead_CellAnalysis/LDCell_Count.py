@@ -145,21 +145,31 @@ for i in range(0, nseries):
 			
 
 # prepare summary
-sumtext = 'Summary: {0}\nLayer,Live,Dead,Viability(%)\n'.format(saveName)
-tLive = 0.0
-tDead = 0.0
-for key in labels:
-	live = float(summary[key][0])
-	tLive += live
-	dead = float(summary[key][1])
-	tDead += dead
-	if live + dead == 0:
-		viability = 'NA'
-	else:
-		viability = live / (live + dead) * 100
-	sumtext += '{0},{1},{2},{3}\n'.format(key, live, dead, viability)
-sumtext += 'Total, {0},{1},{2}\n'.format(tLive, tDead, tLive/(tLive + tDead)*100)
-	
+if len(channels) > 1:
+	sumtext = 'Summary: {0}\nLayer,Live,Dead,Viability(%)\n'.format(saveName)
+	tLive = 0.0
+	tDead = 0.0
+	for key in labels:
+		live = float(summary[key][0])
+		tLive += live
+		dead = float(summary[key][1])
+		tDead += dead
+		if live + dead == 0:
+			viability = 'NA'
+		else:
+			viability = live / (live + dead) * 100
+		sumtext += '{0},{1},{2},{3}\n'.format(key, live, dead, viability)
+	sumtext += 'Total,{0},{1},{2}\n'.format(tLive, tDead, tLive/(tLive + tDead)*100)
+else:
+	sumtext = 'Summary: {0}\nLayer,Number of Cells\n'.format(saveName)
+	tCells = 0.0
+	for key in labels:
+		cells = float(summary[key][0])
+		tCells += cells
+		sumtext += '{0},{1}\n'.format(key, cells)
+	sumtext += 'Total,{0}\n'.format(tCells)
+
+
 # concatenate all excel files into one file
 with open(saveDir + '/' + saveName + '.csv', 'w') as w:
 	w.write(sumtext)
