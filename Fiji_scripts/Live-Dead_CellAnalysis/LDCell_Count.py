@@ -18,9 +18,9 @@ def Analyze(imp):
 	IJ.setAutoThreshold(imp, "Otsu Dark stack")
 	IJ.run(imp, "Convert to Mask", "method=MaxEntropy background=Dark calculate black")
 	#IJ.run(imp, "Invert", "stack")
-	IJ.run(imp, "Despeckle", "stack")
+	#IJ.run(imp, "Despeckle", "stack")
 	IJ.run(imp, "Watershed", "stack")
-	IJ.run(imp, "Analyze Particles...", "size=8-Infinity pixel show=Masks summarize stack")
+	IJ.run(imp, "Analyze Particles...", "size=2-Infinity pixel show=Masks summarize stack")
 
 def sliceCrop(stack, start, end):
 	for i in range(0, start):
